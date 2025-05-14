@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lista de Produtos com Paginação</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 20px;
+      background: #f4f6f8;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 1rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      margin-bottom: 1rem;
+    }
+    th, td {
+      padding: 12px 15px;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+    th {
+      background-color: #2980b9;
+      color: white;
+      font-weight: 600;
+    }
+    tbody tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    button {
+      background-color: #2980b9;
+      border: none;
+      color: white;
+      padding: 8px 14px;
+      font-size: 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.25s ease;
+    }
+    button:hover:not(:disabled) {
+      background-color: #1f6391;
+    }
+    button:disabled {
+      background-color: #95a5a6;
+      cursor: default;
+    }
+    .info {
+      text-align: center;
+      font-size: 0.9rem;
+      color: #555;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Lista de Produtos</h1>
+  <div class="info" id="pageInfo"></div>
+  <table>
+    <thead>
+      <tr>
+        <th>Produto</th>
+        <th>Preço (R$)</th>
+      </tr>
+    </thead>
+    <tbody id="productTableBody">
+      <!-- Produtos serão inseridos aqui -->
+    </tbody>
+  </table>
+  <div class="pagination">
+    <button id="prevBtn" disabled>Anterior</button>
+    <button id="nextBtn" disabled>Próximo</button>
+  </div>
+
+  <script>
+    const apiUrlBase = "http://localhost:8080/api/v1/product";
+    let currentPage = 0;
+    const pageSize = 5;
+
+    const productTableBody = document.getElementById("productTableBody");  // Corpo da tabela
+    const prevBtn = document.getElementById("prevBtn");                    // Botão de Anterior
+    const nextBtn = document.getElementById("nextBtn");                    // Botão de Próximo
+    const pageInfo = document.getElementById("pageInfo");                  // Informação da página
+
+    // Função para buscar produtos da API
+    /**
+     * Função assíncrona para buscar produtos da API com paginação.
+     * @param {number} page - Número da página a ser carregada.
+     * @param {number} size - Tamanho da página (número de produtos por página).
+     * @returns {Promise<Object>} - Retorna uma Promise com os dados dos produtos.
+     */
+    async function fetchProducts(page, size) {
+      try {
+        const res = await fetch(`${apiUrlBase}?page=${page}&size=${size}`);
+        if (!res.ok) {
+          throw new Error('Erro ao carregar os produtos');
+        }
+        return await res.json();
+      } catch (error) {
+        alert(error.message);
+        return null;
+      }
+    }
+
+    /**
+     * Função para renderizar os produtos na tabela.
+     * @param {Array} items - Array de produtos a serem renderizados.
+     */
+    function renderProducts(items) {
+      productTableBody.innerHTML = "";
+      if (!items || items.length === 0) {
+        productTableBody.innerHTML = "<tr><td colspan='2' style='text-align:center;'>Nenhum produto encontrado.</td></tr>";
+        return;
+      }
+      items.forEach(product => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${product.name}</td>
+          <td>${product.price.toFixed(2)}</td> 
+        `;
+        productTableBody.appendChild(tr);       // Adiciona a linha à tabela
+      });
+    }
+
+    /**
+     * Função para atualizar os controles de paginação.
+     * @param {Object} pageResponse - Objeto com informações da página atual.
+     */
+    function updatePaginationControls(pageResponse) {
+      currentPage = pageResponse.page;
+      pageInfo.textContent = `Página ${pageResponse.page + 1} de ${pageResponse.totalPages} (Total de produtos: ${pageResponse.totalElement})`;
+      prevBtn.disabled = currentPage === 0;
+      nextBtn.disabled = !pageResponse.hasNext;
+    }
+
+    /**
+     * Função para carregar a página de produtos.
+     * @param {number} page - Número da página a ser carregada.
+     */
+    async function loadPage(page) {
+      const data = await fetchProducts(page, pageSize);
+      if (data) {
+        renderProducts(data.items);
+        updatePaginationControls(data);
+      }
+    }
+
+    // Adiciona eventos de clique aos botões de paginação
+    prevBtn.addEventListener("click", () => {
+      if (currentPage > 0) {
+        loadPage(currentPage - 1);
+      }
+    });
+
+    // Adiciona evento de clique ao botão "Próximo"
+    nextBtn.addEventListener("click", () => {
+      loadPage(currentPage + 1);
+    });
+
+    // Carregar a primeira página ao abrir
+    loadPage(0);
+  </script>
+</body>
+</html>
+
