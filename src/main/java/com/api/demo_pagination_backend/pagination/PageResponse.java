@@ -11,6 +11,7 @@ public record PageResponse<T>(
     int page,                                 // Número da página atual.
     int size,                                 // Tamanho da página (número de elementos por página).
     long totalElement,                        // Número total de elementos disponíveis (não apenas os da página atual).
+    long totalPages,                          // Número total de páginas disponíveis.
     boolean hasNext                           // Um indicador booleano que informa se há uma próxima página disponível.
     ) {
 
@@ -22,6 +23,7 @@ public record PageResponse<T>(
                 page.getContent(),        // Retorna o conteúdo da página atual.
                 page.getNumber(),         // Retorna o número da página atual.
                 page.getSize(),           // Retorna o tamanho da página (número de elementos por página).
+                page.getTotalElements(),  // Retorna o número total de elementos disponíveis.
                 page.getTotalPages(),     // Retorna o número total de páginas disponíveis.
                 page.hasNext()            // Retorna se há uma próxima página disponível.
             );
